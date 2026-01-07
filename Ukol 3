@@ -4,20 +4,35 @@ V informačních systémech MO se disk C: nazývá "Systém" a disk D: "Data". Z
 Vypište seznam nepoužitých účtů (účtů, ke kterým se nikdo nikdy nepřihlásil) a seznam uzamčených účtů.
 Použijte vhodný cmdlet a poté totéž udělejte pomocí CIM rozhraní.
 -----------------------------------------------------------------------------------------------------------------------------------
-# tiskárny
-Get-CimInstance Win32_Printer
-Get-CimInstance Win32_Printer -Filter "Name='Fax'" |
-Invoke-CimMethod Put -Arguments @{ Location="Kancelář" }
+K řešení následujících úloh použijte CIM rozhraní. Zjistěte vlastnosti třídy umožňující spravovat tiskárny. Změňte umístění faxu.
 
-# disk C:
-Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='C:'"
-Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='C:'" |
-Invoke-CimMethod SetVolumeLabel -Arguments @{ VolumeLabel="Systém" }
 
-# účty – cmdlet
-Get-LocalUser | Where {$_.LastLogon -eq $null}
-Get-LocalUser | Where {$_.LockedOut}
+Get-CimClass -ClassName Win32_Printer | Select-Object -ExpandProperty CimClassProperties
 
-# účty – CIM
-Get-CimInstance Win32_UserAccount -Filter "LocalAccount=True AND LastLogon IS NULL"
-Get-CimInstance Win32_UserAccount -Filter "LocalAccount=True AND Lockout=True"
+$faxPrinter = Get-CimInstance -ClassName Win32_Printer -Filter "Name = 'Fax'"
+
+$faxPrinter.Location = "Kancelář 2. patro"
+
+Set-CimInstance -InputObject $faxPrinter
+-----------------------------------------------------------------------------------------------------------------------------------
+
+V informačních systémech MO se disk C: nazývá "Systém" a disk D: "Data". Zjistěte, jak se nazývá váš disk C: a případně ho přejmenujte na "Systém".
+
+$diskC = Get-CimInstance -ClassName Win32_Volume | Where-Object { $_.DriveLetter -eq 'C:' }
+
+Write-Host "Aktuální název disku C: je '$($diskC.Label)'" -ForegroundColor Yellow
+
+
+if ($diskC.Label -ne 'Systém') { Write-Host "Přejmenovávám disk C: na 'Systém'..." -ForegroundColor Cyan $diskC | Set-CimInstance -Property @{Label = 'Systém'} Write-Host "Hotovo. Disk C: se nyní jmenuje 'Systém'." -ForegroundColor Green } else { Write-Host "Disk C: už má správný název 'Systém'." -ForegroundColor Green }
+-----------------------------------------------------------------------------------------------------------------------------------
+
+Vypište seznam nepoužitých účtů (účtů, ke kterým se nikdo nikdy nepřihlásil) a seznam uzamčených účtů. Použijte vhodný cmdlet a poté totéž udělejte pomocí CIM rozhraní.
+
+Get-ADUser -Filter * -Properties LastLogonDate | Where-Object { -not $_.LastLogonDate } | Select-Object Name, SamAccountName
+
+Uzamčené účty- Nejde pomoci cmdlet
+
+Rozhraní CIM
+Get-CimInstance -ClassName Win32_UserAccount -Filter "LocalAccount = TRUE" | Where-Object { -not $_.LastLogon } | Select-Object Name, Disabled
+
+Get-CimInstance -ClassName Win32_UserAccount -Filter "LocalAccount = TRUE" | Where-Object { $_.Lockout } | Select-Object Name
