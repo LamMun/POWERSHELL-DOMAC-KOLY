@@ -1,0 +1,39 @@
+# Získání aktuální hodnoty
+
+$keyPath = "Registry::HKEY_USERS\.DEFAULT\Control Panel\Keyboard"
+$valueName = "InitialKeyboardIndicators"
+$currentValue = (Get-ItemProperty -Path $keyPath -Name $valueName).$valueName
+
+#Nastaveni pokud není
+
+if ($currentValue -ne "2") {
+    Set-ItemProperty -Path $keyPath -Name $valueName -Value "2"
+    Write-Host "NumLock byl nastaven na zapnutí při přihlášení (hodnota 2)."
+} else {
+    Write-Host "NumLock je již nastaven na zapnutí."
+}
+
+2------------------------
+
+$newKeyPath = "Registry::HKEY_CURRENT_USER\Hrátky s PowerShellem"
+
+# Vytvoření klíče, pokud neexistuje
+if (-not (Test-Path $newKeyPath)) {
+    New-Item -Path $newKeyPath -Force | Out-Null
+}
+
+# Získání dat
+$uzivatel = $env:USERNAME
+$pocitac = $env:COMPUTERNAME
+$datum = Get-Date -Format "dd.MM.yyyy HH:mm:ss"
+$psverze = $PSVersionTable.PSVersion.ToString()
+
+# Zápis do registru
+Set-ItemProperty -Path $newKeyPath -Name "Uzivatel" -Value $uzivatel
+Set-ItemProperty -Path $newKeyPath -Name "Pocitac" -Value $pocitac
+Set-ItemProperty -Path $newKeyPath -Name "Datum" -Value $datum
+Set-ItemProperty -Path $newKeyPath -Name "PowerShellVerze" -Value $psverze
+
+# Výpis potvrzení
+Write-Host "`nInformace zapsány do registru:"
+Get-ItemProperty -Path $newKeyPath | Select-Object Uzivatel, Pocitac, Datum, PowerShellVerze
