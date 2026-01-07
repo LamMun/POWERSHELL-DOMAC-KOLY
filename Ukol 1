@@ -1,0 +1,32 @@
+1.
+Vypište z logu System události typu "Chyba" z posledních 10 dní. Pokud v logu žádnou chybu nemáte, zkuste "Upozornění".
+Proveďte konverzi hexadecimální hodnoty řetězce do ascii.
+$s = "506f7765727368656c6c20697320617765736f6d6521"
+
+-------------------------------------------------------------------------
+
+Get-WinEvent -FilterHashtable @{
+    LogName = 'System'
+    Level = 2
+    StartTime = (Get-Date).AddDays(-10)
+} | Select-Object TimeCreated, ProviderName, LevelDisplayName, Message
+
+
+
+Get-WinEvent -FilterHashtable @{
+    LogName = 'System'
+    Level = 3
+    StartTime = (Get-Date).AddDays(-10)
+} | Select-Object TimeCreated, ProviderName, LevelDisplayName, Message
+
+--------------------------------------------------------------------------
+
+$s = "506f7765727368656c6c20697320617765736f6d6521"
+
+$result = ""
+for ($i = 0; $i -lt $s.Length; $i += 2) {
+    $result += [char][Convert]::ToInt32($s.Substring($i,2),16)
+}
+$result
+
+Powershell is awesome!
